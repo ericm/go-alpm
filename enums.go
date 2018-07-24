@@ -118,3 +118,13 @@ const (
 	ValidationSignature
 	ValidationUnkown Validation = 0
 )
+
+type Usage int
+
+const (
+	UsageSync Usage = 1 << iota
+	UsageSearch
+	UsageInstall
+	UsageUpgrade
+	UsageAll = (1 << 4) - 1
+)

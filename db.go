@@ -117,6 +117,11 @@ func (db Db) SetServers(servers []string) {
 	}
 }
 
+// SetUsage sets the Usage of the database
+func (db Db) SetUsage(usage Usage) {
+	C.alpm_db_set_usage(db.ptr, C.int(usage))
+}
+
 // PkgByName searches a package in db.
 func (db Db) PkgByName(name string) (*Package, error) {
 	cName := C.CString(name)
