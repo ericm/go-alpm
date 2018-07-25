@@ -35,8 +35,8 @@ var pacmanConfRef = PacmanConfig{
 	Options: ConfColor | ConfCheckSpace | ConfVerbosePkgLists,
 
 	Repos: []RepoConfig{
-		{Name: "core", Servers: []string{"ftp://ftp.example.com/foobar/$repo/os/$arch/"}},
-		{Name: "custom", Servers: []string{"file:///home/custompkgs"}},
+		{Name: "core", Usage: UsageAll, Servers: []string{"ftp://ftp.example.com/foobar/$repo/os/$arch/"}},
+		{Name: "custom", Usage: UsageInstall | UsageUpgrade, Servers: []string{"file:///home/custompkgs"}},
 	},
 }
 

@@ -27,6 +27,7 @@ int pkg_cmp(const void *v1, const void *v2)
 import "C"
 
 import (
+	"fmt"
 	"time"
 	"unsafe"
 )
@@ -308,4 +309,9 @@ func (pkg Package) NewVersion(l DbList) *Package {
 func (pkg Package) ShouldIgnore() bool {
 	result := C.alpm_pkg_should_ignore(pkg.handle.ptr, pkg.pmpkg)
 	return result == 1
+}
+
+func (pkg Package) OldPkg() Package {
+	fmt.Printf("%#v\n", pkg.pmpkg)
+	return Package{pkg.pmpkg, pkg.handle}
 }
