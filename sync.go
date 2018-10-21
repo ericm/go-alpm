@@ -13,6 +13,20 @@ import "C"
 
 import "unsafe"
 
+// PkgCachebyGroup returns a PackageList of packages belonging to a group
+func (l DBList) FindGroupPkgs(name string) PackageList {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+	pkglist := unsafe.Pointer(l.List)
+
+	pkgcache := C.alpm_find_group_pkgs((*C.alpm_list_t)(pkglist), cName)
+	if pkgcache == nil {
+		return makePackageList(pkgcache, l.handle)
+	}
+
+	return makePackageList(pkgcache, l.handle)
+}
+
 // NewVersion checks if there is a new version of the package in a given DBlist.
 func (pkg *Package) SyncNewVersion(l DBList) *Package {
 	ptr := C.alpm_sync_newversion(pkg.pmpkg,
