@@ -330,17 +330,6 @@ func (h *Handle) RemoveIgnoreGroup(dir string) (bool, error) {
 	})
 }
 
-/*func (h *Handle) optionGetList(f func(*C.alpm_handle_t) *C.alpm_list_t) (StringList, error){
-	alpmList := f(h.ptr)
-	goList := StringList{(*list)(unsafe.Pointer(alpmList))}
-
-	if alpmList == nil {
-		return goList, h.LastError()
-	}
-	return goList, nil
-}*/
-
-//use alpm_depend_t
 func (h *Handle) AssumeInstalled() (DependList, error) {
 	alpmList := C.alpm_option_get_assumeinstalled(h.ptr)
 	depList := makeDependList(alpmList)
