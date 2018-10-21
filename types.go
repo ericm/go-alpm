@@ -115,27 +115,21 @@ func (l StringList) Slice() []string {
 	return slice
 }
 
-type BackupFile struct {
-	Name string
-	Hash string
-}
+type Backup C.alpm_backup_t
 
 type BackupList struct {
 	*list
 }
 
-func (l BackupList) ForEach(f func(BackupFile) error) error {
+func (l BackupList) ForEach(f func(*Backup) error) error {
 	return l.forEach(func(p unsafe.Pointer) error {
-		bf := (*C.alpm_backup_t)(p)
-		return f(BackupFile{
-			Name: C.GoString(bf.name),
-			Hash: C.GoString(bf.hash),
-		})
+		b := (*Backup)(p)
+		return f(b)
 	})
 }
 
-func (l BackupList) Slice() (slice []BackupFile) {
-	l.ForEach(func(f BackupFile) error {
+func (l BackupList) Slice() (slice []*Backup) {
+	l.ForEach(func(f *Backup) error {
 		slice = append(slice, f)
 		return nil
 	})
