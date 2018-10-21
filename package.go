@@ -210,35 +210,15 @@ func (pkg *Package) Version() string {
 }
 
 // ComputeRequiredBy returns the names of reverse dependencies of a package
-func (pkg *Package) ComputeRequiredBy() []string {
+func (pkg *Package) ComputeRequiredBy() PackageList {
 	result := C.alpm_pkg_compute_requiredby(pkg.pmpkg)
-	requiredby := make([]string, 0)
-	for i := makeList(result); i != nil; i = i.Next() {
-		defer C.free(unsafe.Pointer(i))
-		data := unsafe.Pointer(i.Data())
-		if data != nil {
-			defer C.free(data)
-			name := C.GoString((*C.char)(data))
-			requiredby = append(requiredby, name)
-		}
-	}
-	return requiredby
+	return makePackageList(result, pkg.handle)
 }
 
 // ComputeOptionalFor returns the names of packages that optionally require the given package
-func (pkg *Package) ComputeOptionalFor() []string {
+func (pkg *Package) ComputeOptionalFor() PackageList {
 	result := C.alpm_pkg_compute_optionalfor(pkg.pmpkg)
-	optionalfor := make([]string, 0)
-	for i := makeList(result); i != nil; i = i.Next() {
-		defer C.free(unsafe.Pointer(i))
-		data := unsafe.Pointer(i.Data())
-		if data != nil {
-			defer C.free(data)
-			name := C.GoString((*C.char)(data))
-			optionalfor = append(optionalfor, name)
-		}
-	}
-	return optionalfor
+	return makePackageList(result, pkg.handle)
 }
 
 func (pkg *Package) ShouldIgnore() bool {

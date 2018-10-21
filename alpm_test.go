@@ -41,10 +41,11 @@ func ExampleVerCmp() {
 func TestRevdeps(t *testing.T) {
 	db, _ := h.LocalDB()
 	pkg, _ := db.Pkg("glibc")
-	for i, pkgname := range pkg.ComputeRequiredBy() {
-		t.Logf(pkgname)
+	requiredBy := pkg.ComputeRequiredBy()
+	for i, pkg := range requiredBy.Slice() {
+		t.Log(pkg)
 		if i == 10 {
-			t.Logf("and %d more...", len(pkg.ComputeRequiredBy())-10)
+			t.Logf("and %d more...", requiredBy.Count()-10)
 			return
 		}
 	}

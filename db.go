@@ -78,27 +78,23 @@ func (db *DB) Name() string {
 }
 
 // Servers returns host server URL.
-func (db *DB) Servers() []string {
+func (db *DB) Servers() StringList {
 	ptr := C.alpm_db_get_servers(db.ptr)
-	return makeStringList(ptr).Slice()
+	return makeStringList(ptr)
 }
 
 // SetServers sets server list to use.
-func (db *DB) SetServers(servers []string) {
-	C.alpm_db_set_servers(db.ptr, nil)
-	for _, srv := range servers {
-		Csrv := C.CString(srv)
-		defer C.free(unsafe.Pointer(Csrv))
-		C.alpm_db_add_server(db.ptr, Csrv)
-	}
+func (db *DB) SetServers(servers StringList) {
+	C.alpm_db_set_servers(db.ptr, (*C.alpm_list_t)(unsafe.Pointer(servers.List)))
 }
 
+// Doesn'twork because this function strdups the server
 // AddServers adds a string to the server list.
-func (db *DB) AddServer(server string) {
+/*func (db *DB) AddServer(server string) {
 	Csrv := C.CString(server)
-	defer C.free(unsafe.Pointer(Csrv))
+	//defer C.free(unsafe.Pointer(Csrv))
 	C.alpm_db_add_server(db.ptr, Csrv)
-}
+}*/
 
 // SetUsage sets the Usage of the database
 func (db *DB) SetUsage(usage Usage) {
@@ -136,14 +132,7 @@ func (db *DB) PkgCache() PackageList {
 	return makePackageList(pkgcache, db.handle)
 }
 
-func (db *DB) Search(targets []string) PackageList {
-	var needles *C.alpm_list_t
-
-	for _, str := range targets {
-		needles = C.alpm_list_add(needles, unsafe.Pointer(C.CString(str)))
-	}
-
-	pkglist := C.alpm_db_search(db.ptr, needles)
-	C.alpm_list_free(needles)
+func (db *DB) Search(targets StringList) PackageList {
+	pkglist := C.alpm_db_search(db.ptr, (*C.alpm_list_t)(unsafe.Pointer(targets.List)))
 	return makePackageList(pkglist, db.handle)
 }

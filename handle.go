@@ -40,16 +40,8 @@ func (h *Handle) optionGetList(f func(*C.alpm_handle_t) *C.alpm_list_t) (StringL
 	return goList, nil
 }
 
-func (h *Handle) optionSetList(hookDirs []string, f func(*C.alpm_handle_t, *C.alpm_list_t) C.int) error {
-	var list *C.alpm_list_t
-
-	for _, dir := range hookDirs {
-		cDir := C.CString(dir)
-		list = C.alpm_list_add(list, unsafe.Pointer(cDir))
-		defer C.free(unsafe.Pointer(cDir))
-	}
-
-	ok := f(h.ptr, list)
+func (h *Handle) optionSetList(list StringList, f func(*C.alpm_handle_t, *C.alpm_list_t) C.int) error {
+	ok := f(h.ptr, (*C.alpm_list_t)(unsafe.Pointer(list.List)))
 	if ok < 0 {
 		return h.LastError()
 	}
@@ -144,7 +136,7 @@ func (h *Handle) AddCacheDir(hookDir string) error {
 	})
 }
 
-func (h *Handle) SetCacheDirs(hookDirs []string) error {
+func (h *Handle) SetCacheDirs(hookDirs StringList) error {
 	return h.optionSetList(hookDirs, func(handle *C.alpm_handle_t, l *C.alpm_list_t) C.int {
 		return C.alpm_option_set_cachedirs(handle, l)
 	})
@@ -168,7 +160,7 @@ func (h *Handle) AddHookDir(hookDir string) error {
 	})
 }
 
-func (h *Handle) SetHookDirs(hookDirs []string) error {
+func (h *Handle) SetHookDirs(hookDirs StringList) error {
 	return h.optionSetList(hookDirs, func(handle *C.alpm_handle_t, l *C.alpm_list_t) C.int {
 		return C.alpm_option_set_hookdirs(handle, l)
 	})
@@ -242,7 +234,7 @@ func (h *Handle) AddNoUpgrade(hookDir string) error {
 	})
 }
 
-func (h *Handle) SetNoUpgrades(hookDirs []string) error {
+func (h *Handle) SetNoUpgrades(hookDirs StringList) error {
 	return h.optionSetList(hookDirs, func(handle *C.alpm_handle_t, l *C.alpm_list_t) C.int {
 		return C.alpm_option_set_noupgrades(handle, l)
 	})
@@ -272,7 +264,7 @@ func (h *Handle) AddNoExtract(hookDir string) error {
 	})
 }
 
-func (h *Handle) SetNoExtracts(hookDirs []string) error {
+func (h *Handle) SetNoExtracts(hookDirs StringList) error {
 	return h.optionSetList(hookDirs, func(handle *C.alpm_handle_t, l *C.alpm_list_t) C.int {
 		return C.alpm_option_set_noextracts(handle, l)
 	})
@@ -302,7 +294,7 @@ func (h *Handle) AddIgnorePkg(hookDir string) error {
 	})
 }
 
-func (h *Handle) SetIgnorePkgs(hookDirs []string) error {
+func (h *Handle) SetIgnorePkgs(hookDirs StringList) error {
 	return h.optionSetList(hookDirs, func(handle *C.alpm_handle_t, l *C.alpm_list_t) C.int {
 		return C.alpm_option_set_ignorepkgs(handle, l)
 	})
@@ -326,7 +318,7 @@ func (h *Handle) AddIgnoreGroup(hookDir string) error {
 	})
 }
 
-func (h *Handle) SetIgnoreGroups(hookDirs []string) error {
+func (h *Handle) SetIgnoreGroups(hookDirs StringList) error {
 	return h.optionSetList(hookDirs, func(handle *C.alpm_handle_t, l *C.alpm_list_t) C.int {
 		return C.alpm_option_set_ignoregroups(handle, l)
 	})
