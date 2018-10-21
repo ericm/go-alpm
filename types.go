@@ -38,15 +38,6 @@ func (dep *Depend) Mod() DepMod {
 	return DepMod(dep.mod)
 }
 
-func (dep *Depend) String() string {
-	str := C.alpm_dep_compute_string((*C.alpm_depend_t)(dep))
-	return C.GoString(str)
-}
-
-func (dep *Depend) Free() {
-	C.alpm_dep_free((*C.alpm_depend_t)(dep))
-}
-
 type File C.alpm_file_t
 
 func (file *File) Name() string {

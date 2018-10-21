@@ -9,6 +9,10 @@ import (
 	"unsafe"
 )
 
+func (dep *Depend) Free() {
+	C.alpm_dep_free((*C.alpm_depend_t)(dep))
+}
+
 // FindSatisfier searches a DBList for a package that satisfies depstring
 // Example "glibc>=2.12"
 func (l DBList) FindSatisfier(depstring string) (*Package, error) {
@@ -27,6 +31,12 @@ func (l DBList) FindSatisfier(depstring string) (*Package, error) {
 	return &Package{ptr, l.handle}, nil
 }
 
+func DepFromString(str string) *Depend {
+	cstr := C.CString(str)
+	defer C.free(unsafe.Pointer(cstr))
+	return (*Depend)(C.alpm_dep_from_string(cstr))
+}
+
 // FindSatisfier finds a package that satisfies depstring from PkgList
 func (l PackageList) FindSatisfier(depstring string) (*Package, error) {
 	cDepString := C.CString(depstring)
@@ -41,4 +51,9 @@ func (l PackageList) FindSatisfier(depstring string) (*Package, error) {
 	}
 
 	return &Package{ptr, l.handle}, nil
+}
+
+func (dep *Depend) String() string {
+	str := C.alpm_dep_compute_string((*C.alpm_depend_t)(dep))
+	return C.GoString(str)
 }
