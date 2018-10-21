@@ -15,7 +15,7 @@ func (l DBList) FindSatisfier(depstring string) (*Package, error) {
 	cDepString := C.CString(depstring)
 	defer C.free(unsafe.Pointer(cDepString))
 
-	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.list))
+	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.List))
 	pkgHandle := (*C.struct___alpm_handle_t)(unsafe.Pointer(l.handle.ptr))
 
 	ptr := C.alpm_find_dbs_satisfier(pkgHandle, pkgList, cDepString)
@@ -32,7 +32,7 @@ func (l PackageList) FindSatisfier(depstring string) (*Package, error) {
 	cDepString := C.CString(depstring)
 	defer C.free(unsafe.Pointer(cDepString))
 
-	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.list))
+	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.List))
 
 	ptr := C.alpm_find_satisfier(pkgList, cDepString)
 	if ptr == nil {

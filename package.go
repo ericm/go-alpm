@@ -29,6 +29,8 @@ import "C"
 import (
 	"time"
 	"unsafe"
+
+	"github.com/jguer/go-alpm/alpm_list"
 )
 
 // Package describes a single package and associated handle.
@@ -39,22 +41,22 @@ type Package struct {
 
 // PackageList describes a linked list of packages and associated handle.
 type PackageList struct {
-	*list
+	*alpm_list.List
 	handle Handle
 }
 
 // ForEach executes an action on each package of the PackageList.
-func (l PackageList) ForEach(f func(Package) error) error {
-	return l.forEach(func(p unsafe.Pointer) error {
-		return f(Package{(*C.alpm_pkg_t)(p), l.handle})
+func (l PackageList) ForEach(f func(*Package) error) error {
+	return l.List.ForEach(func(p uintptr) error {
+		return f(&Package{(*C.alpm_pkg_t)(unsafe.Pointer(p)), l.handle})
 	})
 }
 
 // Slice converts the PackageList to a Package Slice.
 func (l PackageList) Slice() []Package {
 	slice := []Package{}
-	l.ForEach(func(p Package) error {
-		slice = append(slice, p)
+	l.ForEach(func(p *Package) error {
+		slice = append(slice, *p)
 		return nil
 	})
 	return slice
@@ -62,9 +64,9 @@ func (l PackageList) Slice() []Package {
 
 // SortBySize returns a PackageList sorted by size.
 func (l PackageList) SortBySize() PackageList {
-	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.list))
+	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.List))
 
-	pkgCache := (*list)(unsafe.Pointer(
+	pkgCache := (*alpm_list.List)(unsafe.Pointer(
 		C.alpm_list_msort(pkgList,
 			C.alpm_list_count(pkgList),
 			C.alpm_list_fn_cmp(C.pkg_cmp))))
@@ -73,12 +75,12 @@ func (l PackageList) SortBySize() PackageList {
 }
 
 // DependList describes a linkedlist of dependency type packages.
-type DependList struct{ *list }
+type DependList struct{ *alpm_list.List }
 
 // ForEach executes an action on each package of the DependList.
 func (l DependList) ForEach(f func(*Depend) error) error {
-	return l.forEach(func(p unsafe.Pointer) error {
-		dep := (*Depend)(p)
+	return l.List.ForEach(func(p uintptr) error {
+		dep := (*Depend)(unsafe.Pointer(p))
 		return f(dep)
 	})
 }
@@ -116,13 +118,13 @@ func (pkg *Package) Architecture() string {
 
 func (pkg *Package) Deltas() StringList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_deltas(pkg.pmpkg))
-	return StringList{(*list)(ptr)}
+	return StringList{(*alpm_list.List)(ptr)}
 }
 
 // Backup returns a list of package backups.
 func (pkg *Package) Backup() BackupList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_backup(pkg.pmpkg))
-	return BackupList{(*list)(ptr)}
+	return BackupList{(*alpm_list.List)(ptr)}
 }
 
 // BuildDate returns the BuildDate of the package.
@@ -134,7 +136,7 @@ func (pkg *Package) BuildDate() time.Time {
 // Conflicts returns the conflicts of the package as a DependList.
 func (pkg *Package) Conflicts() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_conflicts(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // DB returns the package's origin database.
@@ -149,25 +151,25 @@ func (pkg *Package) DB() *DB {
 // Depends returns the package's dependency list.
 func (pkg *Package) Depends() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_depends(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // Depends returns the package's optional dependency list.
 func (pkg *Package) OptionalDepends() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_optdepends(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // Depends returns the package's check dependency list.
 func (pkg *Package) CheckDepends() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_checkdepends(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // Depends returns the package's make dependency list.
 func (pkg *Package) MakeDepends() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_makedepends(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // Description returns the package's description.
@@ -183,7 +185,7 @@ func (pkg *Package) Files() *FileList {
 // Groups returns the groups the package belongs to.
 func (pkg *Package) Groups() StringList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_groups(pkg.pmpkg))
-	return StringList{(*list)(ptr)}
+	return StringList{(*alpm_list.List)(ptr)}
 }
 
 // ISize returns the package installed size.
@@ -201,7 +203,7 @@ func (pkg *Package) InstallDate() time.Time {
 // Licenses returns the package license list.
 func (pkg *Package) Licenses() StringList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_licenses(pkg.pmpkg))
-	return StringList{(*list)(ptr)}
+	return StringList{(*alpm_list.List)(ptr)}
 }
 
 // SHA256Sum returns package SHA256Sum.
@@ -227,7 +229,7 @@ func (pkg *Package) Packager() string {
 // Provides returns DependList of packages provides by package.
 func (pkg *Package) Provides() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_provides(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // Reason returns package install reason.
@@ -245,7 +247,7 @@ func (pkg *Package) Origin() PkgFrom {
 // Replaces returns a DependList with the packages this package replaces.
 func (pkg *Package) Replaces() DependList {
 	ptr := unsafe.Pointer(C.alpm_pkg_get_replaces(pkg.pmpkg))
-	return DependList{(*list)(ptr)}
+	return DependList{(*alpm_list.List)(ptr)}
 }
 
 // Size returns the packed package size.
@@ -268,11 +270,12 @@ func (pkg *Package) Version() string {
 func (pkg *Package) ComputeRequiredBy() []string {
 	result := C.alpm_pkg_compute_requiredby(pkg.pmpkg)
 	requiredby := make([]string, 0)
-	for i := (*list)(unsafe.Pointer(result)); i != nil; i = i.Next {
+	for i := (*alpm_list.List)(unsafe.Pointer(result)); i != nil; i = i.Next() {
 		defer C.free(unsafe.Pointer(i))
-		if i.Data != nil {
-			defer C.free(i.Data)
-			name := C.GoString((*C.char)(i.Data))
+		data := unsafe.Pointer(i.Data())
+		if data != nil {
+			defer C.free(data)
+			name := C.GoString((*C.char)(data))
 			requiredby = append(requiredby, name)
 		}
 	}
@@ -283,11 +286,12 @@ func (pkg *Package) ComputeRequiredBy() []string {
 func (pkg *Package) ComputeOptionalFor() []string {
 	result := C.alpm_pkg_compute_optionalfor(pkg.pmpkg)
 	optionalfor := make([]string, 0)
-	for i := (*list)(unsafe.Pointer(result)); i != nil; i = i.Next {
+	for i := (*alpm_list.List)(unsafe.Pointer(result)); i != nil; i = i.Next() {
 		defer C.free(unsafe.Pointer(i))
-		if i.Data != nil {
-			defer C.free(i.Data)
-			name := C.GoString((*C.char)(i.Data))
+		data := unsafe.Pointer(i.Data())
+		if data != nil {
+			defer C.free(data)
+			name := C.GoString((*C.char)(data))
 			optionalfor = append(optionalfor, name)
 		}
 	}

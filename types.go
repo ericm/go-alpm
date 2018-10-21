@@ -14,6 +14,8 @@ import (
 	"fmt"
 	"reflect"
 	"unsafe"
+
+	"github.com/jguer/go-alpm/alpm_list"
 )
 
 type Depend C.alpm_depend_t
@@ -78,59 +80,40 @@ func (fl *FileList) Slice() []File {
 	return *(*[]File)(unsafe.Pointer(&items))
 }
 
-// Internal alpm list structure.
-type list struct {
-	Data unsafe.Pointer
-	Prev *list
-	Next *list
-}
-
-// Iterates a function on a list and stop on error.
-func (l *list) forEach(f func(unsafe.Pointer) error) error {
-	for ; l != nil; l = l.Next {
-		err := f(l.Data)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 type StringList struct {
-	*list
+	*alpm_list.List
 }
 
-func (l StringList) ForEach(f func(string) error) error {
-	return l.forEach(func(p unsafe.Pointer) error {
-		return f(C.GoString((*C.char)(p)))
+func (l StringList) ForEach(f func(str string) error) error {
+	return l.List.ForEach(func(ptr uintptr) error {
+		return f(C.GoString((*C.char)(unsafe.Pointer(ptr))))
 	})
 }
 
 func (l StringList) Slice() []string {
-	slice := []string{}
-	l.ForEach(func(s string) error {
-		slice = append(slice, s)
-		return nil
-	})
-	return slice
+	strs := make([]string, 0, l.Count())
+	for i := l.List; i != nil; i = i.Next() {
+		strs = append(strs, i.String())
+	}
+	return strs
 }
 
 type Backup C.alpm_backup_t
 
 type BackupList struct {
-	*list
+	*alpm_list.List
 }
 
 func (l BackupList) ForEach(f func(*Backup) error) error {
-	return l.forEach(func(p unsafe.Pointer) error {
-		b := (*Backup)(p)
+	return l.List.ForEach(func(p uintptr) error {
+		b := (*Backup)(unsafe.Pointer(p))
 		return f(b)
 	})
 }
 
-func (l BackupList) Slice() (slice []*Backup) {
+func (l BackupList) Slice() (slice []Backup) {
 	l.ForEach(func(f *Backup) error {
-		slice = append(slice, f)
+		slice = append(slice, *f)
 		return nil
 	})
 	return
@@ -258,7 +241,7 @@ func (question *QuestionSelectProvider) UseIndex() int {
 
 func (question *QuestionSelectProvider) Providers(h *Handle) PackageList {
 	return PackageList{
-		(*list)(unsafe.Pointer(question.providers)),
+		(*alpm_list.List)(unsafe.Pointer(question.providers)),
 		*h,
 	}
 }

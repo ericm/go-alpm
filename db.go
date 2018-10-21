@@ -8,7 +8,6 @@ package alpm
 
 /*
 #include <alpm.h>
-#include <alpm_list.h>
 */
 import "C"
 
@@ -16,6 +15,8 @@ import (
 	"fmt"
 	"io"
 	"unsafe"
+
+	"github.com/jguer/go-alpm/alpm_list"
 )
 
 // DB structure representing a alpm database.
@@ -26,25 +27,23 @@ type DB struct {
 
 // DBList structure representing a alpm database list.
 type DBList struct {
-	*list
+	*alpm_list.List
 	handle Handle
 }
 
-// ForEach executes an action on each DB.
-func (l DBList) ForEach(f func(DB) error) error {
-	return l.forEach(func(p unsafe.Pointer) error {
-		return f(DB{(*C.alpm_db_t)(p), l.handle})
+func (l DBList) ForEach(f func(db *DB) error) error {
+	return l.List.ForEach(func(ptr uintptr) error {
+		return f((*DB)(unsafe.Pointer(ptr)))
 	})
 }
 
-// Slice converst DB list to DB slice.
 func (l DBList) Slice() []DB {
-	slice := []DB{}
-	l.ForEach(func(db DB) error {
-		slice = append(slice, db)
-		return nil
-	})
-	return slice
+	dbs := make([]DB, 0, l.Count())
+	for i := l.List; i != nil; i = i.Next() {
+		ptr := (*DB)(unsafe.Pointer(i.Data()))
+		dbs = append(dbs, *ptr)
+	}
+	return dbs
 }
 
 // SyncDBByName finds a registered database by name.
@@ -53,9 +52,9 @@ func (h *Handle) SyncDBByName(name string) (db *DB, err error) {
 	if err != nil {
 		return nil, err
 	}
-	dblist.ForEach(func(b DB) error {
+	dblist.ForEach(func(b *DB) error {
 		if b.Name() == name {
-			db = &b
+			db = b
 			return io.EOF
 		}
 		return nil
@@ -104,7 +103,7 @@ func (db *DB) Name() string {
 // Servers returns host server URL.
 func (db *DB) Servers() []string {
 	ptr := unsafe.Pointer(C.alpm_db_get_servers(db.ptr))
-	return StringList{(*list)(ptr)}.Slice()
+	return StringList{(*alpm_list.List)(ptr)}.Slice()
 }
 
 // SetServers sets server list to use.
@@ -144,9 +143,9 @@ func (db *DB) Pkg(name string) (*Package, error) {
 func (l DBList) FindGroupPkgs(name string) (PackageList, error) {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
-	pkglist := (*C.struct___alpm_list_t)(unsafe.Pointer(l.list))
+	pkglist := unsafe.Pointer(l.List)
 
-	pkgcache := (*list)(unsafe.Pointer(C.alpm_find_group_pkgs(pkglist, cName)))
+	pkgcache := (*alpm_list.List)(unsafe.Pointer(C.alpm_find_group_pkgs((*C.alpm_list_t)(pkglist), cName)))
 	if pkgcache == nil {
 		return PackageList{pkgcache, l.handle}, l.handle.LastError()
 	}
@@ -156,7 +155,7 @@ func (l DBList) FindGroupPkgs(name string) (PackageList, error) {
 
 // PkgCache returns the list of packages of the database
 func (db *DB) PkgCache() PackageList {
-	pkgcache := (*list)(unsafe.Pointer(C.alpm_db_get_pkgcache(db.ptr)))
+	pkgcache := (*alpm_list.List)(unsafe.Pointer(C.alpm_db_get_pkgcache(db.ptr)))
 	return PackageList{pkgcache, db.handle}
 }
 
@@ -167,7 +166,7 @@ func (db *DB) Search(targets []string) PackageList {
 		needles = C.alpm_list_add(needles, unsafe.Pointer(C.CString(str)))
 	}
 
-	pkglist := (*list)(unsafe.Pointer(C.alpm_db_search(db.ptr, needles)))
+	pkglist := (*alpm_list.List)(unsafe.Pointer(C.alpm_db_search(db.ptr, needles)))
 	C.alpm_list_free(needles)
 	return PackageList{pkglist, db.handle}
 }
