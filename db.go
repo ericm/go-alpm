@@ -15,8 +15,6 @@ import (
 	"fmt"
 	"io"
 	"unsafe"
-
-	"github.com/jguer/go-alpm/alpm_list"
 )
 
 // DB structure representing a alpm database.
@@ -81,8 +79,8 @@ func (db *DB) Name() string {
 
 // Servers returns host server URL.
 func (db *DB) Servers() []string {
-	ptr := unsafe.Pointer(C.alpm_db_get_servers(db.ptr))
-	return StringList{(*alpm_list.List)(ptr)}.Slice()
+	ptr := C.alpm_db_get_servers(db.ptr)
+	return makeStringList(ptr).Slice()
 }
 
 // SetServers sets server list to use.
@@ -124,18 +122,18 @@ func (l DBList) FindGroupPkgs(name string) (PackageList, error) {
 	defer C.free(unsafe.Pointer(cName))
 	pkglist := unsafe.Pointer(l.List)
 
-	pkgcache := (*alpm_list.List)(unsafe.Pointer(C.alpm_find_group_pkgs((*C.alpm_list_t)(pkglist), cName)))
+	pkgcache := C.alpm_find_group_pkgs((*C.alpm_list_t)(pkglist), cName)
 	if pkgcache == nil {
-		return PackageList{pkgcache, l.handle}, l.handle.LastError()
+		return makePackageList(pkgcache, l.handle), l.handle.LastError()
 	}
 
-	return PackageList{pkgcache, l.handle}, nil
+	return makePackageList(pkgcache, l.handle), nil
 }
 
 // PkgCache returns the list of packages of the database
 func (db *DB) PkgCache() PackageList {
-	pkgcache := (*alpm_list.List)(unsafe.Pointer(C.alpm_db_get_pkgcache(db.ptr)))
-	return PackageList{pkgcache, db.handle}
+	pkgcache := C.alpm_db_get_pkgcache(db.ptr)
+	return makePackageList(pkgcache, db.handle)
 }
 
 func (db *DB) Search(targets []string) PackageList {
@@ -145,7 +143,7 @@ func (db *DB) Search(targets []string) PackageList {
 		needles = C.alpm_list_add(needles, unsafe.Pointer(C.CString(str)))
 	}
 
-	pkglist := (*alpm_list.List)(unsafe.Pointer(C.alpm_db_search(db.ptr, needles)))
+	pkglist := C.alpm_db_search(db.ptr, needles)
 	C.alpm_list_free(needles)
-	return PackageList{pkglist, db.handle}
+	return makePackageList(pkglist, db.handle)
 }

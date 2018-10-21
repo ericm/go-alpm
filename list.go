@@ -21,6 +21,10 @@ type DBList struct {
 	handle Handle
 }
 
+func makeList(l *C.alpm_list_t) *alpm_list.List {
+	return (*alpm_list.List)(unsafe.Pointer(l))
+}
+
 func makeStringList(l *C.alpm_list_t) StringList {
 	return StringList{(*alpm_list.List)((unsafe.Pointer(l)))}
 }
@@ -37,6 +41,14 @@ func (l StringList) Slice() []string {
 		strs = append(strs, i.String())
 	}
 	return strs
+}
+
+func ToStringList(strs []string) StringList {
+	var list *alpm_list.List
+	for _, str := range strs {
+		alpm_list.AppendStrdup(&list, str)
+	}
+	return StringList{list}
 }
 
 func makeBackupList(l *C.alpm_list_t) BackupList {
@@ -86,8 +98,9 @@ func makePackageList(l *C.alpm_list_t, h Handle) PackageList {
 
 // ForEach executes an action on each package of the PackageList.
 func (l PackageList) ForEach(f func(*Package) error) error {
-	return l.List.ForEach(func(p uintptr) error {
-		return f(&Package{(*C.alpm_pkg_t)(unsafe.Pointer(p)), l.handle})
+	return l.List.ForEach(func(ptr uintptr) error {
+		p := Package{(*C.alpm_pkg_t)(unsafe.Pointer(ptr)), l.handle}
+		return f(&p)
 	})
 }
 
@@ -107,15 +120,16 @@ func makeDBList(l *C.alpm_list_t, h Handle) DBList {
 
 func (l DBList) ForEach(f func(db *DB) error) error {
 	return l.List.ForEach(func(ptr uintptr) error {
-		return f((*DB)(unsafe.Pointer(ptr)))
+		db := DB{(*C.alpm_db_t)(unsafe.Pointer(ptr)), l.handle}
+		return f(&db)
 	})
 }
 
 func (l DBList) Slice() []DB {
-	dbs := make([]DB, 0, l.Count())
-	for i := l.List; i != nil; i = i.Next() {
-		ptr := (*DB)(unsafe.Pointer(i.Data()))
-		dbs = append(dbs, *ptr)
-	}
-	return dbs
+	slice := []DB{}
+	l.ForEach(func(db *DB) error {
+		slice = append(slice, *db)
+		return nil
+	})
+	return slice
 }

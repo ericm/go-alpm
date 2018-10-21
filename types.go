@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"reflect"
 	"unsafe"
-
-	"github.com/jguer/go-alpm/alpm_list"
 )
 
 type Depend C.alpm_depend_t
@@ -203,10 +201,7 @@ func (question *QuestionSelectProvider) UseIndex() int {
 }
 
 func (question *QuestionSelectProvider) Providers(h *Handle) PackageList {
-	return PackageList{
-		(*alpm_list.List)(unsafe.Pointer(question.providers)),
-		*h,
-	}
+	return makePackageList(question.providers, *h)
 }
 
 func (question *QuestionSelectProvider) Dep() *Depend {

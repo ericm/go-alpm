@@ -11,12 +11,6 @@ package alpm
 */
 import "C"
 
-import (
-	"unsafe"
-
-	"github.com/jguer/go-alpm/alpm_list"
-)
-
 func (h *Handle) TransInit(flags TransFlag) error {
 	ret := C.alpm_trans_init(h.ptr, C.int(flags))
 	if ret != 0 {
@@ -36,13 +30,11 @@ func (h *Handle) TransRelease() error {
 }
 
 func (h *Handle) TransGetAdd() PackageList {
-	pkgs := C.alpm_trans_get_add(h.ptr)
-	return PackageList{(*alpm_list.List)(unsafe.Pointer(pkgs)), *h}
+	return makePackageList(C.alpm_trans_get_add(h.ptr), *h)
 }
 
 func (h *Handle) TransGetRemove() PackageList {
-	pkgs := C.alpm_trans_get_remove(h.ptr)
-	return PackageList{(*alpm_list.List)(unsafe.Pointer(pkgs)), *h}
+	return makePackageList(C.alpm_trans_get_remove(h.ptr), *h)
 }
 
 func (h *Handle) TransGetFlags() (TransFlag, error) {

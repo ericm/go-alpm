@@ -18,8 +18,6 @@ import "C"
 
 import (
 	"unsafe"
-
-	"github.com/jguer/go-alpm/alpm_list"
 )
 
 // Handle contains the pointer to the alpm handle
@@ -34,7 +32,7 @@ type Handle struct {
 //helper functions for wrapping list_t getters and setters
 func (h *Handle) optionGetList(f func(*C.alpm_handle_t) *C.alpm_list_t) (StringList, error) {
 	alpmList := f(h.ptr)
-	goList := StringList{(*alpm_list.List)(unsafe.Pointer(alpmList))}
+	goList := makeStringList(alpmList)
 
 	if alpmList == nil {
 		return goList, h.LastError()
@@ -353,7 +351,7 @@ func (h *Handle) RemoveIgnoreGroup(dir string) (bool, error) {
 //use alpm_depend_t
 func (h *Handle) AssumeInstalled() (DependList, error) {
 	alpmList := C.alpm_option_get_assumeinstalled(h.ptr)
-	depList := DependList{(*alpm_list.List)(unsafe.Pointer(alpmList))}
+	depList := makeDependList(alpmList)
 
 	if alpmList == nil {
 		return depList, h.LastError()
@@ -459,10 +457,9 @@ func (h *Handle) LocalDB() (*DB, error) {
 func (h *Handle) SyncDBs() (DBList, error) {
 	dblist := C.alpm_get_syncdbs(h.ptr)
 	if dblist == nil {
-		return DBList{nil, *h}, h.LastError()
+		return makeDBList(nil, *h), h.LastError()
 	}
-	dblistPtr := unsafe.Pointer(dblist)
-	return DBList{(*alpm_list.List)(dblistPtr), *h}, nil
+	return makeDBList(dblist, *h), nil
 }
 
 func (h *Handle) CheckSpace() (bool, error) {
