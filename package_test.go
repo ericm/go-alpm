@@ -37,7 +37,7 @@ SHA256 Sum   : {{ .SHA256Sum }}
 Reason       : {{ .Reason }}
 
 Required By  : {{ .ComputeRequiredBy }}
-Files        : {{ range .Files }}
+Files        : {{ range .Files.Slice }}
                {{ .Name }} {{ .Size }}{{ end }}
 `
 

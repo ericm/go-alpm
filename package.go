@@ -176,9 +176,8 @@ func (pkg *Package) Description() string {
 }
 
 // Files returns the file list of the package.
-func (pkg *Package) Files() []File {
-	cFiles := C.alpm_pkg_get_files(pkg.pmpkg)
-	return convertFilelist(cFiles)
+func (pkg *Package) Files() *FileList {
+	return (*FileList)(C.alpm_pkg_get_files(pkg.pmpkg))
 }
 
 // Groups returns the groups the package belongs to.

@@ -47,31 +47,35 @@ func (dep *Depend) Free() {
 	C.alpm_dep_free((*C.alpm_depend_t)(dep))
 }
 
-// File provides a description of package files.
-type File struct {
-	Name string
-	Size int64
-	Mode uint32
+type File C.alpm_file_t
+
+func (file *File) Name() string {
+	return C.GoString(file.name)
 }
 
-func convertFilelist(files *C.alpm_filelist_t) []File {
-	size := int(files.count)
-	items := make([]File, size)
+func (file *File) Size() int64 {
+	return int64(file.size)
+}
 
-	rawItems := reflect.SliceHeader{
+func (file *File) Mode() uint32 {
+	return uint32(file.mode)
+}
+
+type FileList C.alpm_filelist_t
+
+func (fl *FileList) Count() uint {
+	return uint(fl.count)
+}
+
+func (fl *FileList) Slice() []File {
+	size := int(fl.Count())
+
+	items := reflect.SliceHeader{
 		Len:  size,
 		Cap:  size,
-		Data: uintptr(unsafe.Pointer(files.files))}
+		Data: uintptr(unsafe.Pointer(fl.files))}
 
-	cFiles := *(*[]C.alpm_file_t)(unsafe.Pointer(&rawItems))
-
-	for i := 0; i < size; i++ {
-		items[i] = File{
-			Name: C.GoString(cFiles[i].name),
-			Size: int64(cFiles[i].size),
-			Mode: uint32(cFiles[i].mode)}
-	}
-	return items
+	return *(*[]File)(unsafe.Pointer(&items))
 }
 
 // Internal alpm list structure.
