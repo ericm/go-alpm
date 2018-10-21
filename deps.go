@@ -5,7 +5,6 @@ package alpm
 */
 import "C"
 import (
-	"fmt"
 	"unsafe"
 )
 
@@ -24,8 +23,7 @@ func (l DBList) FindSatisfier(depstring string) (*Package, error) {
 
 	ptr := C.alpm_find_dbs_satisfier(pkgHandle, pkgList, cDepString)
 	if ptr == nil {
-		return nil,
-			fmt.Errorf("unable to satisfy dependency %s in DBlist", depstring)
+		return nil, l.handle.LastError()
 	}
 
 	return &Package{ptr, l.handle}, nil
@@ -38,7 +36,7 @@ func DepFromString(str string) *Depend {
 }
 
 // FindSatisfier finds a package that satisfies depstring from PkgList
-func (l PackageList) FindSatisfier(depstring string) (*Package, error) {
+func (l PackageList) FindSatisfier(depstring string) *Package {
 	cDepString := C.CString(depstring)
 	defer C.free(unsafe.Pointer(cDepString))
 
@@ -46,14 +44,14 @@ func (l PackageList) FindSatisfier(depstring string) (*Package, error) {
 
 	ptr := C.alpm_find_satisfier(pkgList, cDepString)
 	if ptr == nil {
-		return nil,
-			fmt.Errorf("unable to find dependency %s in PackageList", depstring)
+		return nil
 	}
 
-	return &Package{ptr, l.handle}, nil
+	return &Package{ptr, l.handle}
 }
 
 func (dep *Depend) String() string {
 	str := C.alpm_dep_compute_string((*C.alpm_depend_t)(dep))
+	defer C.free(unsafe.Pointer(str))
 	return C.GoString(str)
 }

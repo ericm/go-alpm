@@ -92,17 +92,17 @@ func (db *DB) Pkg(name string) (*Package, error) {
 }
 
 // PkgCachebyGroup returns a PackageList of packages belonging to a group
-func (l DBList) FindGroupPkgs(name string) (PackageList, error) {
+func (l DBList) FindGroupPkgs(name string) PackageList {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 	pkglist := unsafe.Pointer(l.List)
 
 	pkgcache := C.alpm_find_group_pkgs((*C.alpm_list_t)(pkglist), cName)
 	if pkgcache == nil {
-		return makePackageList(pkgcache, l.handle), l.handle.LastError()
+		return makePackageList(pkgcache, l.handle)
 	}
 
-	return makePackageList(pkgcache, l.handle), nil
+	return makePackageList(pkgcache, l.handle)
 }
 
 // PkgCache returns the list of packages of the database
