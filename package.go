@@ -39,29 +39,6 @@ type Package struct {
 	handle Handle
 }
 
-// PackageList describes a linked list of packages and associated handle.
-type PackageList struct {
-	*alpm_list.List
-	handle Handle
-}
-
-// ForEach executes an action on each package of the PackageList.
-func (l PackageList) ForEach(f func(*Package) error) error {
-	return l.List.ForEach(func(p uintptr) error {
-		return f(&Package{(*C.alpm_pkg_t)(unsafe.Pointer(p)), l.handle})
-	})
-}
-
-// Slice converts the PackageList to a Package Slice.
-func (l PackageList) Slice() []Package {
-	slice := []Package{}
-	l.ForEach(func(p *Package) error {
-		slice = append(slice, *p)
-		return nil
-	})
-	return slice
-}
-
 // SortBySize returns a PackageList sorted by size.
 func (l PackageList) SortBySize() PackageList {
 	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.List))
@@ -72,27 +49,6 @@ func (l PackageList) SortBySize() PackageList {
 			C.alpm_list_fn_cmp(C.pkg_cmp))))
 
 	return PackageList{pkgCache, l.handle}
-}
-
-// DependList describes a linkedlist of dependency type packages.
-type DependList struct{ *alpm_list.List }
-
-// ForEach executes an action on each package of the DependList.
-func (l DependList) ForEach(f func(*Depend) error) error {
-	return l.List.ForEach(func(p uintptr) error {
-		dep := (*Depend)(unsafe.Pointer(p))
-		return f(dep)
-	})
-}
-
-// Slice converts the DependList to a Depend Slice.
-func (l DependList) Slice() []*Depend {
-	slice := []*Depend{}
-	l.ForEach(func(dep *Depend) error {
-		slice = append(slice, dep)
-		return nil
-	})
-	return slice
 }
 
 func (pkg *Package) FileName() string {

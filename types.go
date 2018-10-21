@@ -80,44 +80,7 @@ func (fl *FileList) Slice() []File {
 	return *(*[]File)(unsafe.Pointer(&items))
 }
 
-type StringList struct {
-	*alpm_list.List
-}
-
-func (l StringList) ForEach(f func(str string) error) error {
-	return l.List.ForEach(func(ptr uintptr) error {
-		return f(C.GoString((*C.char)(unsafe.Pointer(ptr))))
-	})
-}
-
-func (l StringList) Slice() []string {
-	strs := make([]string, 0, l.Count())
-	for i := l.List; i != nil; i = i.Next() {
-		strs = append(strs, i.String())
-	}
-	return strs
-}
-
 type Backup C.alpm_backup_t
-
-type BackupList struct {
-	*alpm_list.List
-}
-
-func (l BackupList) ForEach(f func(*Backup) error) error {
-	return l.List.ForEach(func(p uintptr) error {
-		b := (*Backup)(unsafe.Pointer(p))
-		return f(b)
-	})
-}
-
-func (l BackupList) Slice() (slice []Backup) {
-	l.ForEach(func(f *Backup) error {
-		slice = append(slice, *f)
-		return nil
-	})
-	return
-}
 
 type QuestionAny C.alpm_question_any_t
 

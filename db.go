@@ -25,27 +25,6 @@ type DB struct {
 	handle Handle
 }
 
-// DBList structure representing a alpm database list.
-type DBList struct {
-	*alpm_list.List
-	handle Handle
-}
-
-func (l DBList) ForEach(f func(db *DB) error) error {
-	return l.List.ForEach(func(ptr uintptr) error {
-		return f((*DB)(unsafe.Pointer(ptr)))
-	})
-}
-
-func (l DBList) Slice() []DB {
-	dbs := make([]DB, 0, l.Count())
-	for i := l.List; i != nil; i = i.Next() {
-		ptr := (*DB)(unsafe.Pointer(i.Data()))
-		dbs = append(dbs, *ptr)
-	}
-	return dbs
-}
-
 // SyncDBByName finds a registered database by name.
 func (h *Handle) SyncDBByName(name string) (db *DB, err error) {
 	dblist, err := h.SyncDBs()
