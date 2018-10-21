@@ -12,8 +12,6 @@ package alpm
 import "C"
 
 import (
-	"fmt"
-	"io"
 	"unsafe"
 )
 
@@ -21,25 +19,6 @@ import (
 type DB struct {
 	ptr    *C.alpm_db_t
 	handle Handle
-}
-
-// SyncDBByName finds a registered database by name.
-func (h *Handle) SyncDBByName(name string) (db *DB, err error) {
-	dblist, err := h.SyncDBs()
-	if err != nil {
-		return nil, err
-	}
-	dblist.ForEach(func(b *DB) error {
-		if b.Name() == name {
-			db = b
-			return io.EOF
-		}
-		return nil
-	})
-	if db != nil {
-		return db, nil
-	}
-	return nil, fmt.Errorf("database %s not found", name)
 }
 
 // RegisterSyncDB Loads a sync database with given name and signature check level.

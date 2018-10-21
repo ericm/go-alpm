@@ -14,16 +14,6 @@ const (
 	PkgReasonDepend   PkgReason = 1
 )
 
-func (r PkgReason) String() string {
-	switch r {
-	case PkgReasonExplicit:
-		return "Explicitly installed"
-	case PkgReasonDepend:
-		return "Installed as a dependency of another package"
-	}
-	return ""
-}
-
 // Source of a package structure.
 type PkgFrom uint
 
@@ -44,22 +34,6 @@ const (
 	DepModGT                    // Test for > some version.
 	DepModLT                    // Test for < some version.
 )
-
-func (mod DepMod) String() string {
-	switch mod {
-	case DepModEq:
-		return "="
-	case DepModGE:
-		return ">="
-	case DepModLE:
-		return "<="
-	case DepModGT:
-		return ">"
-	case DepModLT:
-		return "<"
-	}
-	return ""
-}
 
 // Signature checking level.
 type SigLevel int
