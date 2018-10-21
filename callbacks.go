@@ -21,7 +21,7 @@ import (
 )
 
 type logCallbackSig func(LogLevel, string)
-type questionCallbackSig func(QuestionAny)
+type questionCallbackSig func(*QuestionAny)
 
 var DefaultLogLevel = LogWarning
 
@@ -41,8 +41,8 @@ func logCallback(level C.alpm_loglevel_t, cstring *C.char) {
 
 //export questionCallback
 func questionCallback(question *C.alpm_question_t) {
-	q := (*C.alpm_question_any_t)(unsafe.Pointer(question))
-	globalQuestionCallback(QuestionAny{q})
+	q := (*QuestionAny)(unsafe.Pointer(question))
+	globalQuestionCallback(q)
 }
 
 func (h *Handle) SetLogCallback(cb logCallbackSig) {
