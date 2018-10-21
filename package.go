@@ -39,7 +39,7 @@ type Package struct {
 
 // SortBySize returns a PackageList sorted by size.
 func (l PackageList) SortBySize() PackageList {
-	pkgList := (*C.struct___alpm_list_t)(unsafe.Pointer(l.List))
+	pkgList := (*C.alpm_list_t)(unsafe.Pointer(l.List))
 
 	pkgCache := C.alpm_list_msort(pkgList,
 		C.alpm_list_count(pkgList),
