@@ -76,17 +76,17 @@ func (l PackageList) SortBySize() PackageList {
 type DependList struct{ *list }
 
 // ForEach executes an action on each package of the DependList.
-func (l DependList) ForEach(f func(Depend) error) error {
+func (l DependList) ForEach(f func(*Depend) error) error {
 	return l.forEach(func(p unsafe.Pointer) error {
-		dep := convertDepend((*C.alpm_depend_t)(p))
+		dep := (*Depend)(p)
 		return f(dep)
 	})
 }
 
 // Slice converts the DependList to a Depend Slice.
-func (l DependList) Slice() []Depend {
-	slice := []Depend{}
-	l.ForEach(func(dep Depend) error {
+func (l DependList) Slice() []*Depend {
+	slice := []*Depend{}
+	l.ForEach(func(dep *Depend) error {
 		slice = append(slice, dep)
 		return nil
 	})

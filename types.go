@@ -16,49 +16,35 @@ import (
 	"unsafe"
 )
 
-// Depend provides a description of a dependency.
-type Depend struct {
-	Name        string
-	Version     string
-	Description string
-	NameHash    uint
-	Mod         DepMod
+type Depend C.alpm_depend_t
+
+func (dep *Depend) Name() string {
+	return C.GoString(dep.name)
 }
 
-func convertDepend(dep *C.alpm_depend_t) Depend {
-	return Depend{
-		Name:        C.GoString(dep.name),
-		Version:     C.GoString(dep.version),
-		Mod:         DepMod(dep.mod),
-		Description: C.GoString(dep.desc),
-		NameHash:    uint(dep.name_hash),
-	}
+func (dep *Depend) Version() string {
+	return C.GoString(dep.version)
 }
 
-func convertCDepend(dep Depend) *C.alpm_depend_t {
-	cName := C.CString(dep.Name)
-	cVersion := C.CString(dep.Version)
-	cDesc := C.CString(dep.Description)
-
-	cDep := C.alpm_depend_t{
-		name:      cName,
-		version:   cVersion,
-		desc:      cDesc,
-		name_hash: C.ulong(dep.NameHash),
-		mod:       C.alpm_depmod_t(dep.Mod),
-	}
-
-	return &cDep
+func (dep *Depend) Description() string {
+	return C.GoString(dep.desc)
 }
 
-func freeCDepend(dep *C.alpm_depend_t) {
-	defer C.free(unsafe.Pointer(dep.name))
-	defer C.free(unsafe.Pointer(dep.version))
-	defer C.free(unsafe.Pointer(dep.desc))
+func (dep *Depend) NameHash() uint {
+	return uint(dep.name_hash)
 }
 
-func (dep Depend) String() string {
-	return dep.Name + dep.Mod.String() + dep.Version
+func (dep *Depend) Mod() DepMod {
+	return DepMod(dep.mod)
+}
+
+func (dep *Depend) String() string {
+	str := C.alpm_dep_compute_string((*C.alpm_depend_t)(dep))
+	return C.GoString(str)
+}
+
+func (dep *Depend) Free() {
+	C.alpm_dep_free((*C.alpm_depend_t)(dep))
 }
 
 // File provides a description of package files.
@@ -287,6 +273,6 @@ func (question QuestionSelectProvider) Providers(h *Handle) PackageList {
 	}
 }
 
-func (question QuestionSelectProvider) Dep() Depend {
-	return convertDepend(question.ptr.depend)
+func (question QuestionSelectProvider) Dep() *Depend {
+	return (*Depend)(question.ptr.depend)
 }

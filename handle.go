@@ -359,18 +359,15 @@ func (h *Handle) AssumeInstalled() (DependList, error) {
 	return depList, nil
 }
 
-func (h *Handle) AddAssumeInstalled(dep Depend) error {
-	cDep := convertCDepend(dep)
-	defer freeCDepend(cDep)
-
-	ok := C.alpm_option_add_assumeinstalled(h.ptr, cDep)
+func (h *Handle) AddAssumeInstalled(dep *Depend) error {
+	ok := C.alpm_option_add_assumeinstalled(h.ptr, (*C.alpm_depend_t)(dep))
 	if ok < 0 {
 		return h.LastError()
 	}
 	return nil
 }
 
-func (h *Handle) SetAssumeInstalled(deps []Depend) error {
+func (h *Handle) SetAssumeInstalled(deps []*Depend) error {
 	//calling this function the first time causes alpm to set the
 	//assumeinstalled list to a list containing go allocated alpm_depend_t's
 	//this is bad because alpm might at some point tree to free them
@@ -385,9 +382,7 @@ func (h *Handle) SetAssumeInstalled(deps []Depend) error {
 	var list *C.alpm_list_t
 
 	for _, dep := range deps {
-		cDep := convertCDepend(dep)
-		defer freeCDepend(cDep)
-		list = C.alpm_list_add(list, unsafe.Pointer(cDep))
+		list = C.alpm_list_add(list, unsafe.Pointer(dep))
 	}
 
 	ok := C.alpm_option_set_assumeinstalled(h.ptr, list)
@@ -398,7 +393,7 @@ func (h *Handle) SetAssumeInstalled(deps []Depend) error {
 
 }
 
-func (h *Handle) RemoveAssumeInstalled(dep Depend) (bool, error) {
+func (h *Handle) RemoveAssumeInstalled(dep *Depend) (bool, error) {
 	//internally alpm uses alpm_list_remove to remove a alpm_depend_t from
 	//the list
 	//i believe this function considers items equal if they are the same
@@ -413,10 +408,8 @@ func (h *Handle) RemoveAssumeInstalled(dep Depend) (bool, error) {
 	//although for the sake of completeness it would be nice to have this
 	//working
 	panic("This function (RemoveAssumeInstalled) does not work properly, please do not use. See source code for more details")
-	cDep := convertCDepend(dep)
-	defer freeCDepend(cDep)
 
-	ok := C.alpm_option_remove_assumeinstalled(h.ptr, cDep)
+	ok := C.alpm_option_remove_assumeinstalled(h.ptr, (*C.alpm_depend_t)(dep))
 	if ok < 0 {
 		return ok == 1, h.LastError()
 	}
