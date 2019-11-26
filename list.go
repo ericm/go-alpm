@@ -6,7 +6,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/jguer/go-alpm/alpm_list"
+	"github.com/ericm/go-alpm/alpm_list"
 )
 
 type StringList struct{ *alpm_list.List }

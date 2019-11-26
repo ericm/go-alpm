@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jguer/go-alpm"
+	"github.com/ericm/go-alpm"
 )
 
 func main() {
